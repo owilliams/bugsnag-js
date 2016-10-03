@@ -25,7 +25,19 @@
     eventsRemaining = 10,
     // The default depth of attached metadata which is parsed before truncation. It
     // is configurable via the `maxDepth` setting.
-    maxPayloadDepth = 5;
+    maxPayloadDepth = 5,
+    // configuration settings
+    options = { };
+
+  self.config = function(newOptions) {
+    each(newOptions, function(value, key) {
+      if (value === "false") {
+        value = false;
+      }
+
+      options[key.toLowerCase()] = value;
+    });
+  };
 
   // #### Bugsnag.noConflict
   //
@@ -764,14 +776,27 @@
 
   // Get configuration settings from either `self` (the `Bugsnag` object)
   // or `data` (the `data-*` attributes).
-  var data;
   function getSetting(name, fallback) {
-    data = data || getData(thisScript);
-    var setting = self[name] !== undefined ? self[name] : data[name.toLowerCase()];
-    if (setting === "false") {
-      setting = false;
+
+    if (self[name] !== undefined) {
+      var value = self[name];
+      log(
+        "configuring options using `Bugsnag." + name + " = " + value + "` is deprecated \n" +
+        "Please use `Bugsnag.config({ " + name + ": " + value + " });`"
+      );
     }
-    return setting !== undefined ? setting : fallback;
+
+    var setting = self.options[name.toLowerCase()];
+
+    if (setting === undefined) {
+      setting = self[name];
+    }
+
+    if (setting === undefined) {
+      setting = fallback;
+    }
+
+    return setting;
   }
 
   // Validate a Bugsnag API key exists and is of the correct format.
@@ -1126,6 +1151,8 @@
       }
     });
   }
+
+  self.config(getData(thisScript));
 
   // setup auto breadcrumb tracking
   trackClicks();
